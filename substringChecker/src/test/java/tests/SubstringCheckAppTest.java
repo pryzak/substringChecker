@@ -1,10 +1,10 @@
 package tests;
 
-import main.SubstringChecker;
-
 import static org.junit.Assert.*;
 
 import org.junit.Test;
+
+import checker.SubstringChecker;
 
 public class SubstringCheckAppTest {
 

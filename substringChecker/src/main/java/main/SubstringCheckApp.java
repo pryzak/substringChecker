@@ -2,6 +2,8 @@ package main;
 
 import java.util.Scanner;
 
+import checker.SubstringChecker;
+
 
 public class SubstringCheckApp {
 	
