@@ -1,0 +1,13 @@
+.project
+.settings
+target
+logs
+Servers
+.class
+.classpath
+.metadata
+.recommenders
+.pydevproject
+.log
+
+
