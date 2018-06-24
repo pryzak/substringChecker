@@ -1,87 +1,106 @@
 package checker;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class SubstringChecker {
 
 	/**
-	 * Checks if string b is substring of a.
-	 * Each ocurrence of *
+	 * Verifies if string b is substring of a.
 	 * 
-	 * @param a whole string
-	 * @param b substring
-	 * @return
+	 * Each occurrence of '*' in the second substring means that it can be a
+	 * match for zero or more characters of the first string.
+	 * 
+	 * Additionally asterisk (*) may be considered as a regular character, if it
+	 * is preceded by a backslash (\). Backslash (\) is considered as a regular
+	 * character in all cases other than preceding the asterisk (*).
+	 * 
+	 * @param a
+	 *            whole string
+	 * @param b
+	 *            substring
+	 * @return true if a is substring of b, in other case false
 	 * @throws RuntimeException
+	 *             when substring is longer than whole string
 	 */
 	public static boolean isSubstring(String a, String b) throws RuntimeException {
-		
-		int count = 0;
-		if (b.length() > a.length()) {
-			for(char c : b.toCharArray()) {
-				if(c != '*') count++;
-			}
-			if(count > a.length())
-				throw new RuntimeException("substring is longer than string");
+
+		return isSubstring(null, a, b);
+	}
+
+	private static boolean isSubstring(Integer startIndex, String a, String b) throws RuntimeException {
+
+		if (startIndex == null) {
+			startIndex = 0;
 		}
-		
-		//zliczamy wystąpienia '*'
-		int stars = 0;
-		for (int j = 0; j < b.length(); j++) {
-			if(b.charAt(j) == '*') {
-				stars ++;
+
+		List<Integer> asteriskPos = new ArrayList<>();
+		List<Integer> escapingSlashPos = new ArrayList<>();
+
+		for (int i = 0; i < b.length(); i++) {
+			if (b.charAt(i) == '*' && (i == 0 || b.charAt(i - 1) != '\\')) {
+				asteriskPos.add(i);
+			} else if (b.charAt(i) == '\\' && i < b.length() - 1 && b.charAt(i + 1) == '*') {
+				escapingSlashPos.add(i);
 			}
 		}
-		if(stars == b.length()) {
+
+		if (asteriskPos.size() == b.length()) {
 			return true;
 		}
-		
-		//pomijamy '*' jeśli są na początku substringa
-		//s to indeks początkowy
-		int s = 0;
-		for (int j = 0; j < b.length(); j++) {
-			if(b.charAt(j) == '*') {
-				s = j + 1;
-			}
-			else break;
+
+		if (b.length() - asteriskPos.size() - escapingSlashPos.size() > a.length()) {
+			throw new RuntimeException("Substring is longer than string");
 		}
-		
-		//pomijamy '*' jeśli są na końcu substringa
-		//e to indeks końcowy
-		int e = b.length() - 1;
-		for (int j = b.length() - 1; j >= 0; j--) {
-			if(b.charAt(j) == '*') {
-				e = j - 1;
-			}
-			else break;
-		}
-		
-		for (int i = 0; i <= a.length() - (b.length() - stars); i++) {
-			for (int j = s; j <= e; ) {
-				//znaki pasują
-				if (a.charAt(i + j - s) == b.charAt(j) || b.charAt(j) == '*') {
-					//koniec stringa
-					if (j == e) {
+
+		// pominięte backslashe
+		int pastBackslashes = 0;
+
+		for (int i = startIndex; i < a.length(); i++) {
+			for (int j = 0; j < b.length();) {
+				
+				// jeśli gwiazdka, to pomijamy kolejne gwiazdki i sprawdzamy
+				// tylko pozostałą część
+				if (asteriskPos.contains(j)) {
+					while (j < b.length() - 1) {
+						if (b.charAt(j + 1) == '*') {
+							j++;
+						} else
+							break;
+					}
+					return isSubstring(startIndex, a, b.substring(j + 1));
+				}
+
+				// koniec stringa 'a', nie znaleziono substringa
+				if (i + j - pastBackslashes >= a.length()) {
+					return false;
+				}
+
+				// znaki pasują
+				if (a.charAt(i + j - pastBackslashes) == b.charAt(j) && !escapingSlashPos.contains(j)) {
+					
+					// koniec stringa, wszystko pasuje
+					if (j >= b.length() - 1) {
 						return true;
 					}
 					j++;
+					
+				// jeśli gwiazdka w miejscu \*
+				} else if (a.charAt(i + j - pastBackslashes) == '*' && escapingSlashPos.contains(j)) {
+					
+					// koniec stringa, wszystko pasuje
+					if (j + 1 >= b.length() - 1) {
+						return true;
+					}
+					j += 2;
+					pastBackslashes++;
 				} else {
-					//poprzedni znak to '*'
-					if(j > 0 && b.charAt(j - 1) == '*' && j >= s) {
-						//koniec stringa
-						if (j == e) {
-							return true;
-						}
-						else if(i < a.length() - 1) {
-							i++;
-						}
-						else {
-							return false;
-						}
-					}
-					else {
-						break;
-					}
+					// nie znaleziono pasującego znaku, przechodzimy do natępnego znaku z 'a'
+					break;
 				}
 			}
 		}
+
 		return false;
 	}
 
